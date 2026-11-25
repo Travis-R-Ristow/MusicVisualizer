@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tab Audio Visualizer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="visCanvas"></canvas>
+
+  <div id="setupOverlay">
+    <div class="panel" id="setupCard">
+      <h1>Connect Chrome tab audio</h1>
+      <p>
+        Click <strong>Share Tab Audio</strong>, choose the tab playing music, and ensure tab audio sharing is enabled in Chrome before confirming.
+      </p>
+      <div class="setup-actions">
+        <button id="shareBtn" class="primary">Share Tab Audio</button>
+        <button id="cancelSetupBtn" type="button">Cancel</button>
+        <button id="disconnectBtn" type="button">Disconnect</button>
+      </div>
+      <div id="setupStatus" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="controlBar" class="panel">
+    <label>
+      Mode
+      <div id="modePicker" class="mode-picker">
+        <button id="modeTrigger" class="mode-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+          <span id="modeTriggerText">Auto · All modes</span>
+          <span class="mode-chevron" aria-hidden="true">⌃</span>
+        </button>
+        <div id="modeMenu" class="mode-menu" role="menu" hidden>
+          <div class="mode-menu-header">
+            <button id="selectAllModes" type="button">Select all</button>
+            <button id="clearModes" type="button">Clear</button>
+          </div>
+          <button class="mode-auto-row" id="modeAuto" type="button" role="menuitemradio" aria-checked="true">
+            <span class="mode-row-check" aria-hidden="true">✓</span>
+            <span>Auto</span>
+            <small id="autoPoolCount">All modes</small>
+          </button>
+          <div id="modeOptions" class="mode-options"></div>
+        </div>
+      </div>
+    </label>
+
+    <label>
+      Auto Lock
+      <span class="inline">
+        <input id="lockToggle" type="checkbox" />
+        Keep selected mode
+      </span>
+    </label>
+
+    <label>
+      Transition
+      <select id="transitionSelect">
+        <option value="smooth">Smooth Crossfade</option>
+        <option value="hard">Hard Cut</option>
+        <option value="hybrid" selected>Hybrid</option>
+      </select>
+    </label>
+
+    <label>
+      Quality
+      <select id="qualitySelect">
+        <option value="smooth">Smooth</option>
+        <option value="rich">Rich</option>
+      </select>
+    </label>
+
+    <label>
+      Intensity
+      <input id="intensityRange" type="range" min="0.4" max="2.2" step="0.05" value="1.1" />
+    </label>
+
+    <label>
+      Screen
+      <button id="fullscreenBtn" type="button">Fullscreen</button>
+    </label>
+
+    <label>
+      Audio
+      <button id="reshareBtn" type="button">Reshare Audio</button>
+    </label>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
