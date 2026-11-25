@@ -280,6 +280,7 @@ class VisualizerApp {
       this.activeMode = modeName;
       this.nextMode = null;
       this.transitionProgress = 0;
+      updateModeTriggerLabel();
       return;
     }
     this.nextMode = modeName;
@@ -655,6 +656,7 @@ class VisualizerApp {
         this.activeMode = this.nextMode;
         this.nextMode = null;
         this.transitionProgress = 0;
+        updateModeTriggerLabel();
       }
       return;
     }
@@ -702,6 +704,21 @@ function syncSettings() {
   saveSettings(app.settings);
 }
 
+function updateModeTriggerLabel() {
+  if (!modeTriggerText) {
+    return;
+  }
+  const enabledCount = app.enabledModes.length;
+  if (app.settings.mode === "auto") {
+    const currentModeName = app.modeNames[app.activeMode] || "Starting";
+    modeTriggerText.textContent = enabledCount === app.modeOrder.length
+      ? `Auto · ${currentModeName}`
+      : `Auto · ${currentModeName} · ${enabledCount}`;
+  } else {
+    modeTriggerText.textContent = app.modeNames[app.settings.mode] || "Auto";
+  }
+}
+
 function setMode(mode) {
   app.setSetting("mode", mode);
   syncSettings();
@@ -712,28 +729,26 @@ function setMode(mode) {
 }
 
 function updateEnabledModes(enabledModes) {
+  const previousMode = app.activeMode;
   app.enabledModes = app.modeOrder.filter((mode) => enabledModes.includes(mode));
   app.setSetting("enabledModes", app.enabledModes);
   if (app.enabledModes.length === 0) {
     app.setSetting("mode", app.activeMode);
   } else if (app.enabledModes.length === 1) {
     app.setSetting("mode", app.enabledModes[0]);
+    app.requestMode(app.enabledModes[0]);
   } else {
     app.setSetting("mode", "auto");
+    if (!app.enabledModes.includes(previousMode)) {
+      app.requestMode(app.pickNextMode());
+    }
   }
   syncSettings();
   renderModePicker();
 }
 
 function renderModePicker() {
-  const enabledCount = app.enabledModes.length;
-  if (app.settings.mode === "auto") {
-    modeTriggerText.textContent = enabledCount === app.modeOrder.length
-      ? "Auto · All modes"
-      : `Auto · ${enabledCount} mode${enabledCount === 1 ? "" : "s"}`;
-  } else {
-    modeTriggerText.textContent = app.modeNames[app.settings.mode] || "Auto";
-  }
+  updateModeTriggerLabel();
 
   modeOptions.replaceChildren();
   for (const mode of app.modeOrder) {
