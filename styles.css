@@ -212,7 +212,7 @@ button:hover {
 }
 
 .mode-option {
-  grid-template-columns: 54px 1fr 18px;
+  grid-template-columns: 18px 1fr 54px;
   min-height: 36px;
   border-radius: 6px;
   color: var(--text);
@@ -223,6 +223,10 @@ button:hover {
 }
 
 .mode-only {
+  grid-column: 3;
+  justify-self: end;
+  opacity: 0;
+  visibility: hidden;
   height: 28px;
   padding: 0 8px;
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -231,11 +235,18 @@ button:hover {
   color: var(--muted);
   font-size: 0.72rem;
   text-align: center;
+  transition: opacity 120ms ease, visibility 120ms ease;
 }
 
 .mode-only.active {
   color: var(--text);
   border-color: rgba(94, 166, 255, 0.55);
+}
+
+.mode-option:hover .mode-only,
+.mode-option:focus-within .mode-only {
+  opacity: 1;
+  visibility: visible;
 }
 
 .mode-option input {

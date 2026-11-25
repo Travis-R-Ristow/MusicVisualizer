@@ -537,20 +537,30 @@ class VisualizerApp {
       const cy = h * 0.5;
       const points = [];
       for (let i = 0; i < stars; i += 1) {
-        const angle = (i / stars) * Math.PI * 2 + now * (0.018 + treble * 0.012);
-        const orbit = Math.min(w, h) * (0.11 + ((i * 47) % 100) / 420) * (1 + bass * 0.08 + beat * 0.035);
+        const seedA = ((i * 47) % 101) / 101;
+        const seedB = ((i * 73) % 97) / 97;
+        const direction = i % 5 === 0 ? -1 : 1;
+        const speed = 0.006 + seedA * 0.018;
+        const angle = seedB * Math.PI * 2 +
+          now * speed * direction +
+          treble * 0.018 * Math.sin(now * 0.09 + i);
+        const orbit = Math.min(w, h) * (0.11 + ((i * 47) % 100) / 420) *
+          (1 + bass * 0.055 + beat * 0.025);
         points.push({
-          x: cx + Math.cos(angle) * orbit * (0.9 + mid * 0.22),
-          y: cy + Math.sin(angle) * orbit * (0.62 + treble * 0.18)
+          x: cx + Math.cos(angle) * orbit * (0.9 + mid * 0.16),
+          y: cy + Math.sin(angle) * orbit * (0.62 + treble * 0.12),
+          depth: seedA,
+          phase: seedB * Math.PI * 2
         });
       }
       this.ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < points.length; i += 1) {
         const point = points[i];
         const hue = palette.start + i * (palette.spread / points.length) + onset * 32;
-        this.ctx.fillStyle = `hsla(${hue}, 88%, 72%, ${0.45 + beat * 0.45})`;
+        const twinkle = 0.72 + Math.sin(now * (0.12 + point.depth * 0.16) + point.phase) * 0.16;
+        this.ctx.fillStyle = `hsla(${hue}, 88%, 72%, ${twinkle * (0.48 + beat * 0.28)})`;
         this.ctx.beginPath();
-        this.ctx.arc(point.x, point.y, 1.2 + bass * 3.2 + beat * 1.8, 0, Math.PI * 2);
+        this.ctx.arc(point.x, point.y, 1.1 + point.depth * 1.4 + bass * 1.8 + beat * 1.2, 0, Math.PI * 2);
         this.ctx.fill();
         for (let j = i + 1; j < points.length; j += 1) {
           const dx = point.x - points[j].x;
@@ -744,7 +754,7 @@ function renderModePicker() {
     checkbox.type = "checkbox";
     checkbox.checked = app.enabledModes.includes(mode);
     checkbox.setAttribute("aria-label", `Include ${app.modeNames[mode]} in Auto`);
-    row.append(onlyButton, label, checkbox);
+    row.append(checkbox, label, onlyButton);
 
     onlyButton.addEventListener("click", (event) => {
       event.stopPropagation();
