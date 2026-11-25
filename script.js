@@ -84,13 +84,18 @@ class VisualizerApp {
     };
     this.smoothedAudio = { ...this.audioMetrics };
 
-    this.modeOrder = ["fluid", "ribbons", "bloom", "aurora", "orbit"];
+    this.modeOrder = ["fluid", "ribbons", "bloom", "aurora", "orbit", "prism", "lissajous", "constellation", "tidal", "helix"];
     this.modeNames = {
       fluid: "Fluid Tunnel",
       ribbons: "Harmonic Ribbons",
       bloom: "Radial Bloom",
       aurora: "Aurora Field",
-      orbit: "Orbital Rings"
+      orbit: "Orbital Rings",
+      prism: "Prism Lines",
+      lissajous: "Lissajous Field",
+      constellation: "Constellation",
+      tidal: "Tidal Bands",
+      helix: "Spiral Helix"
     };
     const savedEnabledModes = Array.isArray(settings.enabledModes)
       ? settings.enabledModes.filter((mode) => this.modeOrder.includes(mode))
@@ -476,6 +481,140 @@ class VisualizerApp {
         }
         this.ctx.stroke();
       }
+    } else if (modeName === "prism") {
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const rays = this.settings.quality === "rich" ? 18 : 12;
+      const radius = Math.min(w, h) * (0.24 + bass * 0.16 + beat * 0.04);
+      for (let ray = 0; ray < rays; ray += 1) {
+        const angle = (ray / rays) * Math.PI * 2 + now * 0.025;
+        const split = (ray % 2 === 0 ? 1 : -1) * (0.08 + mid * 0.12);
+        const innerRadius = radius * (0.18 + (ray % 3) * 0.04);
+        const outerRadius = radius * (1 + treble * 0.08);
+        const hue = palette.start + ray * (palette.spread / rays) + onset * 30;
+        this.ctx.strokeStyle = `hsla(${hue}, 82%, 64%, ${0.4 - ray * 0.008})`;
+        this.ctx.lineWidth = 1 + bass * 2.4;
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx + Math.cos(angle) * innerRadius, cy + Math.sin(angle) * innerRadius);
+        this.ctx.quadraticCurveTo(
+          cx + Math.cos(angle + split) * radius * 0.72,
+          cy + Math.sin(angle + split) * radius * 0.72,
+          cx + Math.cos(angle) * outerRadius,
+          cy + Math.sin(angle) * outerRadius
+        );
+        this.ctx.stroke();
+      }
+    } else if (modeName === "lissajous") {
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const curves = this.settings.quality === "rich" ? 7 : 4;
+      const points = this.settings.quality === "rich" ? 280 : 180;
+      const sizeX = w * (0.14 + mid * 0.12 + beat * 0.018);
+      const sizeY = h * (0.16 + bass * 0.12 + beat * 0.022);
+      for (let curve = 0; curve < curves; curve += 1) {
+        const t = curve / Math.max(1, curves - 1);
+        const xFreq = 3 + (curve % 3);
+        const yFreq = 2 + ((curve + 1) % 4);
+        const hue = palette.start + t * palette.spread + treble * 24;
+        this.ctx.strokeStyle = `hsla(${hue}, 78%, ${58 + t * 12}%, ${0.42 - t * 0.18})`;
+        this.ctx.lineWidth = 1 + mid * 2.2;
+        this.ctx.beginPath();
+        for (let i = 0; i <= points; i += 1) {
+          const a = (i / points) * Math.PI * 2;
+          const x = cx + Math.sin(a * xFreq + now * (0.08 + treble * 0.04) + curve) * sizeX;
+          const y = cy + Math.sin(a * yFreq + now * (0.055 + bass * 0.03)) * sizeY;
+          if (i === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+        }
+        this.ctx.stroke();
+      }
+    } else if (modeName === "constellation") {
+      const stars = this.settings.quality === "rich" ? 28 : 18;
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const points = [];
+      for (let i = 0; i < stars; i += 1) {
+        const angle = (i / stars) * Math.PI * 2 + now * (0.018 + treble * 0.012);
+        const orbit = Math.min(w, h) * (0.11 + ((i * 47) % 100) / 420) * (1 + bass * 0.08 + beat * 0.035);
+        points.push({
+          x: cx + Math.cos(angle) * orbit * (0.9 + mid * 0.22),
+          y: cy + Math.sin(angle) * orbit * (0.62 + treble * 0.18)
+        });
+      }
+      this.ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < points.length; i += 1) {
+        const point = points[i];
+        const hue = palette.start + i * (palette.spread / points.length) + onset * 32;
+        this.ctx.fillStyle = `hsla(${hue}, 88%, 72%, ${0.45 + beat * 0.45})`;
+        this.ctx.beginPath();
+        this.ctx.arc(point.x, point.y, 1.2 + bass * 3.2 + beat * 1.8, 0, Math.PI * 2);
+        this.ctx.fill();
+        for (let j = i + 1; j < points.length; j += 1) {
+          const dx = point.x - points[j].x;
+          const dy = point.y - points[j].y;
+          if (dx * dx + dy * dy < (Math.min(w, h) * 0.18) ** 2) {
+            this.ctx.strokeStyle = `hsla(${hue}, 74%, 64%, ${0.08 + mid * 0.12})`;
+            this.ctx.lineWidth = 0.8;
+            this.ctx.beginPath();
+            this.ctx.moveTo(point.x, point.y);
+            this.ctx.lineTo(points[j].x, points[j].y);
+            this.ctx.stroke();
+          }
+        }
+      }
+      this.ctx.globalCompositeOperation = "source-over";
+    } else if (modeName === "tidal") {
+      const bands = this.settings.quality === "rich" ? 12 : 8;
+      const points = this.settings.quality === "rich" ? 220 : 140;
+      for (let band = 0; band < bands; band += 1) {
+        const t = band / Math.max(1, bands - 1);
+        const yBase = h * (0.18 + t * 0.64);
+        const amplitude = h * (0.018 + bass * 0.06 + beat * 0.025);
+        const hue = palette.start + t * palette.spread + mid * 20;
+        this.ctx.strokeStyle = `hsla(${hue}, 76%, ${60 - t * 12}%, ${0.36 - t * 0.12})`;
+        this.ctx.lineWidth = 1 + mid * 2;
+        this.ctx.beginPath();
+        for (let i = 0; i <= points; i += 1) {
+          const x = (i / points) * w;
+          const phase = x * 0.005 + now * (0.2 + treble * 0.12) + band * 0.58;
+          const y = yBase + Math.sin(phase) * amplitude + Math.sin(phase * 0.37 - now * 0.08) * amplitude * 0.42;
+          if (i === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+        }
+        this.ctx.stroke();
+      }
+    } else if (modeName === "helix") {
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const strands = 2;
+      const length = this.settings.quality === "rich" ? 220 : 140;
+      const radius = Math.min(w, h) * (0.12 + mid * 0.1 + beat * 0.025);
+      for (let strand = 0; strand < strands; strand += 1) {
+        const phaseOffset = strand * Math.PI;
+        this.ctx.strokeStyle = `hsla(${palette.start + strand * palette.spread * 0.5 + treble * 26}, 82%, 64%, 0.5)`;
+        this.ctx.lineWidth = 1.2 + bass * 2.4;
+        this.ctx.beginPath();
+        for (let i = 0; i <= length; i += 1) {
+          const t = i / length;
+          const angle = t * Math.PI * 5 + now * (0.12 + treble * 0.08) + phaseOffset;
+          const height = (t - 0.5) * h * (0.62 + bass * 0.08);
+          const perspective = 0.45 + (Math.sin(angle) + 1) * 0.275;
+          const x = cx + Math.cos(angle) * radius * perspective;
+          const y = cy + height;
+          if (i === 0) {
+            this.ctx.moveTo(x, y);
+          } else {
+            this.ctx.lineTo(x, y);
+          }
+        }
+        this.ctx.stroke();
+      }
     }
 
     this.ctx.restore();
@@ -527,8 +666,6 @@ const modePicker = document.getElementById("modePicker");
 const modeTrigger = document.getElementById("modeTrigger");
 const modeTriggerText = document.getElementById("modeTriggerText");
 const modeMenu = document.getElementById("modeMenu");
-const modeAuto = document.getElementById("modeAuto");
-const autoPoolCount = document.getElementById("autoPoolCount");
 const modeOptions = document.getElementById("modeOptions");
 const selectAllModes = document.getElementById("selectAllModes");
 const clearModes = document.getElementById("clearModes");
@@ -567,6 +704,13 @@ function setMode(mode) {
 function updateEnabledModes(enabledModes) {
   app.enabledModes = app.modeOrder.filter((mode) => enabledModes.includes(mode));
   app.setSetting("enabledModes", app.enabledModes);
+  if (app.enabledModes.length === 0) {
+    app.setSetting("mode", app.activeMode);
+  } else if (app.enabledModes.length === 1) {
+    app.setSetting("mode", app.enabledModes[0]);
+  } else {
+    app.setSetting("mode", "auto");
+  }
   syncSettings();
   renderModePicker();
 }
@@ -581,43 +725,41 @@ function renderModePicker() {
     modeTriggerText.textContent = app.modeNames[app.settings.mode] || "Auto";
   }
 
-  modeAuto.classList.toggle("active", app.settings.mode === "auto");
-  modeAuto.setAttribute("aria-checked", app.settings.mode === "auto" ? "true" : "false");
-  autoPoolCount.textContent = enabledCount === app.modeOrder.length
-    ? "All modes"
-    : `${enabledCount} enabled`;
-
   modeOptions.replaceChildren();
   for (const mode of app.modeOrder) {
-    const row = document.createElement("button");
+    const row = document.createElement("div");
     row.className = "mode-option";
-    row.type = "button";
     row.setAttribute("role", "menuitem");
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = app.enabledModes.includes(mode);
-    checkbox.tabIndex = -1;
-    checkbox.setAttribute("aria-label", `Include ${app.modeNames[mode]} in Auto`);
+    const onlyButton = document.createElement("button");
+    onlyButton.type = "button";
+    onlyButton.className = "mode-only";
+    onlyButton.textContent = "Only";
+    onlyButton.classList.toggle("active", app.settings.mode === mode);
 
     const label = document.createElement("span");
     label.textContent = app.modeNames[mode];
 
-    const manualLabel = document.createElement("small");
-    manualLabel.textContent = app.settings.mode === mode ? "Active" : "Select";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = app.enabledModes.includes(mode);
+    checkbox.setAttribute("aria-label", `Include ${app.modeNames[mode]} in Auto`);
+    row.append(onlyButton, label, checkbox);
 
-    row.append(checkbox, label, manualLabel);
+    onlyButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      updateEnabledModes([mode]);
+      setMode(mode);
+      modeMenu.hidden = true;
+      modePicker.classList.remove("open");
+      modeTrigger.setAttribute("aria-expanded", "false");
+    });
     checkbox.addEventListener("change", (event) => {
       event.stopPropagation();
       const nextEnabledModes = app.enabledModes.includes(mode)
         ? app.enabledModes.filter((enabledMode) => enabledMode !== mode)
         : [...app.enabledModes, mode];
       updateEnabledModes(nextEnabledModes);
-    });
-    row.addEventListener("click", (event) => {
-      if (event.target !== checkbox) {
-        setMode(mode);
-      }
     });
     modeOptions.appendChild(row);
   }
@@ -746,15 +888,12 @@ modeTrigger.addEventListener("click", () => {
   modeTrigger.setAttribute("aria-expanded", willOpen ? "true" : "false");
 });
 
-modeAuto.addEventListener("click", () => setMode("auto"));
-
 selectAllModes.addEventListener("click", () => {
   updateEnabledModes([...app.modeOrder]);
 });
 
 clearModes.addEventListener("click", () => {
   updateEnabledModes([]);
-  showToast("No modes enabled for Auto.", "success");
 });
 
 document.addEventListener("pointerdown", (event) => {

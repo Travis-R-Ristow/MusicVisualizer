@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#06070a" />
   <title>Tab Audio Visualizer</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -35,13 +36,8 @@
         <div id="modeMenu" class="mode-menu" role="menu" hidden>
           <div class="mode-menu-header">
             <button id="selectAllModes" type="button">Select all</button>
-            <button id="clearModes" type="button">Clear</button>
+            <button id="clearModes" type="button">Clear all</button>
           </div>
-          <button class="mode-auto-row" id="modeAuto" type="button" role="menuitemradio" aria-checked="true">
-            <span class="mode-row-check" aria-hidden="true">✓</span>
-            <span>Auto</span>
-            <small id="autoPoolCount">All modes</small>
-          </button>
           <div id="modeOptions" class="mode-options"></div>
         </div>
       </div>
